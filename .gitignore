@@ -3,3 +3,4 @@
 **/*.lock
 scripts/*/**
 !scripts/*/.empty
+private-key.pem

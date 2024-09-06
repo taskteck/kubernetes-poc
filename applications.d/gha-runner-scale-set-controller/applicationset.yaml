@@ -18,7 +18,7 @@ spec:
     spec:
       project: default
       sources:
-      - repoURL: 'https://github.com/taskteck/kind-kubernetes-for-poc.git'
+      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
         targetRevision: 'dev'
         ref: values
       - repoURL: 'ghcr.io/actions/actions-runner-controller-charts'

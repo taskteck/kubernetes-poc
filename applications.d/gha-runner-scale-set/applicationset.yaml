@@ -24,10 +24,10 @@ spec:
     spec:
       project: default
       sources:
-      - repoURL: 'https://github.com/taskteck/kind-kubernetes-for-poc.git'
+      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
         targetRevision: 'dev'
         ref: values
-      - repoURL: 'https://github.com/taskteck/kind-kubernetes-for-poc.git'
+      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
         targetRevision: 'dev'
         path: assets/gha-runner-scale-set-stne/helm
         helm:
@@ -36,6 +36,8 @@ spec:
             value: "https://github.com/taskteck"
           - name: runnerScaleSet.runnerScaleSetName
             value: "{{ flavour }}-runner-scale-set-{{ environment }}"
+          - name: runnerScaleSet.githubConfigSecret
+            value: gh-runners-secret
           valueFiles:
           - '$values/applications.d/gha-runner-scale-set/values.yaml'
       destination:

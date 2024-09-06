@@ -2,7 +2,7 @@
 runnerScaleSet:
   runnerScaleSetName: "runner-scale-set"
   githubConfigUrl: "https://github.com/taskteck"
-  githubConfigSecret: gh-runners-secrets
+  githubConfigSecret: gh-runners-secret
   template:
     spec:
       initContainers:
@@ -51,6 +51,6 @@ runnerScaleSet:
         emptyDir: {}
   controllerServiceAccount:
     namespace: arc-system
-    name: bastet-cat-controller-stg-gha-rs-controller
+    name: taskteck-controller-stg-gha-rs-controller
   maxRunners: 5
 
