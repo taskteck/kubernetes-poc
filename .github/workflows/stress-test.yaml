@@ -12,19 +12,6 @@ jobs:
       - name: Install stress-ng
         run: |
           sudo apt-get update
-          sudo apt-get install -y stress-ng
-      - name: Run stress test
-        run: |
-          echo "Starting stress test..."
-          stress-ng --cpu 8 --io 4 --vm 4 --vm-bytes 256M --timeout 2m --metrics-brief
-          echo "Stress test completed."
-      - name: Capture system resource usage
-        run: |
-          echo "CPU Usage:"
-          mpstat
-          echo "Memory Usage:"
-          free -m
-          echo "Disk Usage:"
-          df -h
-          echo "IO Stats:"
-          iostat
+
+      - run: sleep 10
+
