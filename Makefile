@@ -1,6 +1,10 @@
 # Variables
-KIND_CLUSTER_NAME := $(if $(CLUSTER_NAME),$(CLUSTER_NAME),taskteck-cluster)
-DOMAIN := $(if $(LOCAL_DOMAIN),$(LOCAL_DOMAIN),.taskteck.local)
+KIND_CLUSTER_NAME := $(if $(CLUSTER_NAME),$(CLUSTER_NAME),bastet-cluster)
+DOMAIN := $(if $(LOCAL_DOMAIN),$(LOCAL_DOMAIN),.bastet-cat.local)
+
+VAULT_NAMESPACE := vault
+VAULT_SECRET_NAME := vault-keys
+VAULT_ADDR := http://vault$(DOMAIN)
 
 ARGOCD_SECRET_NAME := argocd-keys
 ARGOCD_NAMESPACE := argo-cd
@@ -22,13 +26,13 @@ default:
 # Verifica se os binários necessários estão instalados
 .PHONY: check-prerequisites
 check-prerequisites:
+	@echo '----------------------------------------------------------------------------------------------'
 	@$(foreach bin,$(REQUIRED_BINS), \
 		if ! [ -x "$(shell command -v $(bin))" ]; then \
 			echo "Error: $(bin) is not installed or not in the PATH"; \
 			exit 1; \
 		fi; \
 	)
-	@$(shell echo "----------------------------------------------------------------------------------------------$@")
 
 # Remove o cluster
 .PHONY: destroy-cluster
@@ -57,11 +61,11 @@ endif
 
 # Configura apps
 .PHONY: .setup-apps
-.setup-apps: check-prerequisites setup-argocd
+.setup-apps: check-prerequisites setup-vault setup-argocd
 
 .PHONY: setup-cilium
 setup-cilium: check-prerequisites
-	$(HELM) upgrade --install cilium cilium \
+	@$(HELM) upgrade --install cilium cilium \
 		--repo=https://helm.cilium.io \
 		--version 1.15.0 \
 		--namespace kube-system \
@@ -103,7 +107,7 @@ endif
 
 .PHONY: setup-ingress
 setup-ingress: check-prerequisites
-	$(HELM) upgrade --install ingress-nginx ingress-nginx \
+	@$(HELM) upgrade --install ingress-nginx ingress-nginx \
 		--repo=https://kubernetes.github.io/ingress-nginx \
 		--version 4.11.2 \
 		--namespace kube-system \
@@ -125,8 +129,68 @@ setup-ingress: check-prerequisites
 		--set controller.allowSnippetAnnotations=true
 	$(KUBECTL) rollout status -n kube-system deployment/ingress-nginx-controller
 
+.PHONY: setup-vault
+setup-vault: check-prerequisites
+	@$(HELM) upgrade --install vault vault \
+		--repo=https://helm.releases.hashicorp.com \
+		--version 0.28.0 \
+		--namespace $(VAULT_NAMESPACE) \
+		--create-namespace \
+		--set server.ingress.enabled=true \
+		--set server.ingress.ingressClassName=nginx \
+		--set server.ingress.hosts[0].host="vault$(DOMAIN)" \
+		--set ingress.hosts[0].paths[0].path="/" \
+		--set ingress.hosts[0].paths[0].pathType="Prefix"
+	@bash -c 'source ./scripts/setup-vault.sh; KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) VAULT_URL=$(VAULT_ADDR) VAULT_SECRET_NAME=$(VAULT_SECRET_NAME) VAULT_NAMESPACE=$(VAULT_NAMESPACE) DOMAIN=$(DOMAIN) setup-vault'
+
+.PHONY: .setup-vault-env
+.setup-vault-env: check-prerequisites
+	@bash -c './scripts/pre-calls.sh pre-argo'
+
+	@$(eval JSON:=$(shell $(CURL) --retry-max-time 10 -s --request POST --data '{"password": "system"}' $(VAULT_ADDR)/v1/auth/userpass/login/system))
+	@$(eval SYSTEM_TOKEN:=$(shell echo '$(JSON)' | $(JQ) '.auth["client_token"]' | tr -d '"'))
+
+	@$(eval JSON:=$(shell $(CURL) -s --header "X-Vault-Token: $(SYSTEM_TOKEN)" \
+		--request POST \
+		--data '{ "policies": ["poweruser"], "ttl": "0" }' \
+		$(VAULT_ADDR)/v1/auth/token/create))
+	@$(eval SYSTEM_LONG_TOKEN:=$(shell echo '$(JSON)' | $(JQ) '.auth["client_token"]' | tr -d '"'))
+
+	@$(eval ARGOCD_SECRET:=$(shell openssl rand -base64 8))
+
+	@if ! echo '$(shell $(CURL) -s --header "X-Vault-Token: $(SYSTEM_TOKEN)" --request GET "$(VAULT_ADDR)/v1/tools/data/argocd")' | jq '.' | grep -q 'admin-secret'; then \
+		echo "\e[34mCreating vault argo-cd secret\e[0m"; \
+		$(CURL) -s --header "X-Vault-Token: $(SYSTEM_TOKEN)" \
+			--request POST \
+			--data '{"data": {"admin-secret": "$(ARGOCD_SECRET)"}}' \
+			$(VAULT_ADDR)/v1/tools/data/argocd | jq '.'; \
+	fi
+
+	@if [ -z "$(SYSTEM_TOKEN)" ]; then \
+		echo "\e[31mFailed to create poweruser token secret\e[0m"; \
+		echo '$(LOGIN_RESPONSE)' | jq; \
+		exit 1; \
+	else \
+		if ! ($(KUBECTL) get namespace external-secrets &> /dev/null); then \
+			$(KUBECTL) create namespace external-secrets; \
+			echo "\e[34mNamespace external-secrets created\e[0m"; \
+		else \
+			echo "Namespace external-secrets already exists"; \
+		fi; \
+		if ! ($(KUBECTL) get secret vault-token -n external-secrets &> /dev/null); then \
+			$(KUBECTL) create secret generic vault-token -n external-secrets --from-literal="token=$(SYSTEM_LONG_TOKEN)" && \
+			echo "\e[34mpoweruser token secret created\e[0m"; \
+		else \
+			echo "poweruser token secret already exists"; \
+		fi \
+	fi
+
 .PHONY: setup-argocd
-setup-argocd: check-prerequisites
+setup-argocd: check-prerequisites .setup-vault-env
+	@$(eval LOGIN_RESPONSE:=$(shell $(CURL) -sS --request POST --data "{\"password\": \"system\"}" "$(VAULT_ADDR)/v1/auth/userpass/login/system"))
+	@if echo '$(LOGIN_RESPONSE)' | grep -q '"auth"'; then echo "\e[1mLogin successful.\e[0m"; else echo "\e[91mLogin fail.\e[0m"; fi;
+	@$(eval SYSTEM_TOKEN:=$(shell echo '$(LOGIN_RESPONSE)' | $(JQ) '.auth["client_token"]'))
+	@$(eval ARGOCD_SECRET:=$(shell $(CURL) -s --header "X-Vault-Token: $(SYSTEM_TOKEN)" --request GET $(VAULT_ADDR)/v1/tools/data/argocd | jq '.data.data["admin-secret"]'))
 	@$(HELM) upgrade --install argo-cd argo-cd \
 		--repo=https://argoproj.github.io/argo-helm \
 		--version 7.1.3 \
