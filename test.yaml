@@ -1,0 +1,17 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  labels:
+    argocd.argoproj.io/instance: external-secrets-operator
+  name: vault-apps-backend
+spec:
+  provider:
+    vault:
+      auth:
+        tokenSecretRef:
+          key: token
+          name: vault-keys
+          namespace: external-secrets
+      path: apps
+      server: 'http://vault.vault.svc.cluster.local:8200'
+      version: v2

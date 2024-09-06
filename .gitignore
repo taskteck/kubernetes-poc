@@ -1,0 +1,6 @@
+[D|d]ebug/**
+**/*.tgz
+**/*.lock
+scripts/*/**
+!scripts/*/.empty
+private-key.pem
