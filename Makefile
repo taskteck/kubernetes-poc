@@ -206,6 +206,7 @@ setup-argocd: check-prerequisites .setup-vault-env
 		--set configs.annotations."server\.insecure"=true \
 		--set configs.cm.annotations."url"="http://argocd$(DOMAIN)" \
 		--set notifications.argocdUrl="http://argocd$(DOMAIN)" \
+		--set configs.cm.annotations."argocd.argoproj.io/sync-options"="SkipPrune" \
 		--set server.extraArgs[0]="--insecure" \
 		--set configs.secret.argocdServerAdminPassword=$$($(ARGOCD) account bcrypt --password $(ARGOCD_SECRET))
 	@echo "Aguardando argocd"
