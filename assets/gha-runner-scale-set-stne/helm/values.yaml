@@ -1,0 +1,4 @@
+runnerScaleSet:
+  runnerScaleSetName: "runner-scale-set"
+  githubConfigUrl: "https://github.com/taskteck"
+  githubConfigSecret: gha-runner-scale-set-secret
