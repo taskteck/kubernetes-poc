@@ -18,8 +18,8 @@ spec:
     spec:
       project: default
       sources:
-      - repoURL: 'https://github.com/bastet-cat/kind-kubernetes-for-poc.git'
-        targetRevision: 'main'
+      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
+        targetRevision: 'dev'
         ref: values
       - repoURL: 'ghcr.io/actions/actions-runner-controller-charts'
         chart: 'gha-runner-scale-set-controller'

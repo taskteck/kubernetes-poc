@@ -6,8 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/bastet-cat/kind-kubernetes-for-poc.git'
-    targetRevision: 'main'
+    repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
+    targetRevision: 'dev'
     path: assets/external-secrets-operator-stno/helm
   destination:
     server: 'https://kubernetes.default.svc'
