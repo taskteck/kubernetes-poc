@@ -1,8 +1,13 @@
 ## name of the runner scale set to create.  Defaults to the helm release nameexternalsecrets:
+externalsecrets:
+  items:
+    - org: bastet-cat
+      path: arc-system
+
 runnerScaleSet:
   runnerScaleSetName: "runner-scale-set"
-  githubConfigUrl: "https://github.com/taskteck"
-  githubConfigSecret: gh-runners-secret
+  githubConfigUrl: "https://github.com/bastet-cat"
+  githubConfigSecret: gh-runners-bastet-cat-secrets
   template:
     spec:
       initContainers:
@@ -51,6 +56,6 @@ runnerScaleSet:
         emptyDir: {}
   controllerServiceAccount:
     namespace: arc-system
-    name: taskteck-controller-stg-gha-rs-controller
+    name: bastet-cat-controller-stg-gha-rs-controller
   maxRunners: 5
 

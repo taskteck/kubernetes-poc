@@ -39,15 +39,13 @@ destroy-cluster: check-prerequisites
 # Cria o cluster
 .PHONY: create-cluster
 create-cluster: check-prerequisites
-	@if $(KIND) get clusters | grep -q $(KIND_CLUSTER_NAME); then \
-		echo "Cluster already exists"; \
-	else \
-		echo "Creating cluster..."; \
-		if $(KIND) network ls -f name=kind -q; then $(DOCKER) network rm $(DOCKER) network ls -f name=kind -q; fi; \
-		$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config .kind/config.yaml; \
-		$(MAKE) .setup-cluster; \
-	fi
-
+ifeq (, $(shell $(KIND) get clusters | grep $(KIND_CLUSTER_NAME)))
+	@if $(KIND) network ls -f name=kind -q; then $(DOCKER) network rm $(docker network ls -f name=kind -q); fi
+	@$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --config .kind/config.yaml
+	$(MAKE) .setup-cluster
+else
+	@echo "Cluster already exists"
+endif
 
 # Configura cluster
 .PHONY: .setup-cluster
@@ -150,4 +148,5 @@ setup-argocd: check-prerequisites
 	@until $(CURL) --output /dev/null --silent --head --fail http://argocd$(DOMAIN); do printf '.'; sleep 10; done
 	@$(ARGOCD) login argocd$(DOMAIN) --username admin --password $(ARGOCD_SECRET) --insecure --grpc-web --plaintext
 	@$(ARGOCD) repo add ghcr.io/actions/actions-runner-controller-charts --type helm --name actions-runner-controller-charts --enable-oci
+	@$(ARGOCD) repo add ghcr.io/external-secrets/charts --type helm --name external-secrets --enable-oci
 	@./scripts/pre-calls.sh pre-end

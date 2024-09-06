@@ -8,7 +8,7 @@ spec:
         generators:
           - list:
               elements:
-                - name: taskteck
+                - name: bastet-cat
           - list:
               elements:
               - cluster: in-cluster
@@ -24,20 +24,18 @@ spec:
     spec:
       project: default
       sources:
-      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
-        targetRevision: 'dev'
+      - repoURL: 'https://github.com/bastet-cat/kind-kubernetes-for-poc.git'
+        targetRevision: 'main'
         ref: values
-      - repoURL: 'https://github.com/taskteck/kubernetes-poc.git'
-        targetRevision: 'dev'
+      - repoURL: 'https://github.com/bastet-cat/kind-kubernetes-for-poc.git'
+        targetRevision: 'main'
         path: assets/gha-runner-scale-set-stne/helm
         helm:
           parameters:
           - name: runnerScaleSet.githubConfigUrl
-            value: "https://github.com/taskteck"
+            value: "https://github.com/bastet-cat"
           - name: runnerScaleSet.runnerScaleSetName
             value: "{{ flavour }}-runner-scale-set-{{ environment }}"
-          - name: runnerScaleSet.githubConfigSecret
-            value: gh-runners-secret
           valueFiles:
           - '$values/applications.d/gha-runner-scale-set/values.yaml'
       destination:
