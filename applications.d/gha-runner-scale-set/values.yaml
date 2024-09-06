@@ -7,7 +7,7 @@ externalsecrets:
 runnerScaleSet:
   runnerScaleSetName: "runner-scale-set"
   githubConfigUrl: "https://github.com/taskteck"
-  githubConfigSecret: gh-runners-secret
+  githubConfigSecret: gh-runners-taskteck-secrets
   template:
     spec:
       initContainers:

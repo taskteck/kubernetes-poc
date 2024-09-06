@@ -1,6 +1,6 @@
 # Variables
-KIND_CLUSTER_NAME := $(if $(CLUSTER_NAME),$(CLUSTER_NAME),bastet-cluster)
-DOMAIN := $(if $(LOCAL_DOMAIN),$(LOCAL_DOMAIN),.bastet-cat.local)
+KIND_CLUSTER_NAME := $(if $(CLUSTER_NAME),$(CLUSTER_NAME),taskteck-cluster)
+DOMAIN := $(if $(LOCAL_DOMAIN),$(LOCAL_DOMAIN),.taskteck.local)
 
 VAULT_NAMESPACE := vault
 VAULT_SECRET_NAME := vault-keys
