@@ -1,0 +1,19 @@
+name: Test Runner
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  test-runner:
+    runs-on: small-runner-scale-set-stg
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up runner
+        run: |
+          echo "Olá!! Teste de execução'"
+
